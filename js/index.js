@@ -1,6 +1,11 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Historial de cálculos
-    let historial = [];
+    // Historial cálculo
+    let historial = JSON.parse(localStorage.getItem('historial')) || [];
+
+    //historial en el localStorage
+    function guardarHistorial() {
+        localStorage.setItem('historial', JSON.stringify(historial));
+    }
 
     function calcularPagoMensual(monto, tasaInteres, numeroCuotas) {
         const tasaMensual = tasaInteres / 100 / 12;
@@ -22,14 +27,13 @@ document.addEventListener('DOMContentLoaded', function() {
         return detalles;
     }
 
-
     function mostrarResultados(pagoMensual, numeroCuotas) {
         const detalles = mostrarCuotas(pagoMensual, numeroCuotas);
         const resultadosDiv = document.getElementById('resultados');
         resultadosDiv.innerHTML = `<p>El pago mensual es: $${pagoMensual}</p><pre>${detalles}</pre>`;
     }
 
-    // Función para agregar un cálculo al historial
+    //agrega un cálculo al historial
     function agregarAlHistorial(monto, tasaInteres, numeroCuotas, pagoMensual) {
         const calculo = {
             monto,
@@ -39,10 +43,17 @@ document.addEventListener('DOMContentLoaded', function() {
             fecha: new Date().toLocaleString()
         };
         historial.push(calculo);
+        guardarHistorial();
         actualizarHistorial();
+        Swal.fire({
+            icon: 'success',
+            title: 'Cálculo Agregado🚀',
+            text: `Monto: $${monto}, Tasa de Interés: ${tasaInteres}%, Cuotas: ${numeroCuotas}, Pago Mensual: $${pagoMensual}`,
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false
+        })
     }
-
-    // Función para actualizar el historial en la interfaz
     function actualizarHistorial() {
         const historialDiv = document.getElementById('historial');
         historialDiv.innerHTML = '';
@@ -57,11 +68,8 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>`;
         });
     }
-
-    // Manejar el envío del formulario y calcular los resultados
     document.getElementById('formulario').addEventListener('submit', function(event) {
         event.preventDefault();
-        
         const monto = parseFloat(document.getElementById('monto').value);
         const numeroCuotas = parseInt(document.getElementById('numeroCuotas').value);
         const tasaInteres = parseFloat(document.getElementById('tasaInteres').value);
@@ -69,16 +77,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (isNaN(monto) || isNaN(numeroCuotas) || isNaN(tasaInteres) || monto <= 0 || numeroCuotas <= 0 || tasaInteres < 0) {
             alert("Por favor, ingrese valores válidos.");
         } else {
-            
             const pagoMensual = calcularPagoMensual(monto, tasaInteres, numeroCuotas);
-            
             mostrarResultados(pagoMensual, numeroCuotas);
-            
             agregarAlHistorial(monto, tasaInteres, numeroCuotas, pagoMensual);
         }
     });
-
-    // Función para buscar en el historial
     document.getElementById('buscar').addEventListener('click', function() {
         const montoBuscado = parseFloat(document.getElementById('buscarMonto').value);
         const historialDiv = document.getElementById('historial');
@@ -94,4 +97,10 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>`;
         });
     });
+    document.getElementById('borrarHistorial').addEventListener('click', function() {
+        historial = [];
+        guardarHistorial();
+        actualizarHistorial();
+    });
+    actualizarHistorial();
 });
